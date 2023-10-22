@@ -1,5 +1,4 @@
 from pytube import YouTube,Playlist
-from time import sleep
 from flet import (
     Page,
     app,
@@ -7,21 +6,15 @@ from flet import (
     TextField,
     colors,
     Row,
-    Dropdown,
-    dropdown,
-    IconButton,
-    KeyboardType,
     ThemeMode,
     icons,
     Icon,
-    Banner,
     AppView,
-    NavigationBar,
-    NavigationDestination,
     AppBar,
-    FilledButton,
+    ElevatedButton,
     alignment,
-    Padding
+    Padding,
+    Theme
 )
 
 
@@ -30,14 +23,10 @@ def main(page:Page):
     page.vertical_alignment = alignment.top_center
     page.padding = Padding(top=100,right=0,bottom=0,left=0)
     page.horizontal_alignment = "center" 
-    page.theme_mode= ThemeMode.LIGHT   
-    page.bgcolor = colors.PURPLE_100
-    page.navigation_bar = NavigationBar(destinations=[
-            NavigationDestination(icon=icons.VIDEO_FILE, label="Download Video"),
-            NavigationDestination(icon=icons.VIDEO_LIBRARY, label="Download Playlist"),
-            
-        ]
-    )
+    page.theme_mode= ThemeMode.LIGHT 
+    page.theme = Theme(color_scheme_seed="pink")  
+    page.bgcolor = colors.PINK_100
+    
     page.appbar = AppBar(
         leading=Icon(icons.APPS_OUTAGE_SHARP),
         leading_width=30,
@@ -47,8 +36,8 @@ def main(page:Page):
     )
 
     boxh = 80
-    boxw = 400
-    fsize = 20
+    boxw = 600
+    fsize = 16
 
     urltext = Text(
         value="Enter your URL here:",
@@ -68,12 +57,50 @@ def main(page:Page):
         border_color="black",
         hint_text="https://www.youtube.com/watch?v=Vds8ddYXYZY"
     )
-    btndown= FilledButton(
+    def downvideo(e):
+        yt = YouTube(str(urlbox.value))
+        page.add(Text(value=yt.title+" downloading..."))
+        page.update()
+        stream = yt.streams.get_highest_resolution()
+        page.add(Text(value=yt.title+" download in few minutes"))
+        stream.download(output_path="C:\\Users\\iamad\\Downloads")
+        page.add(Text(value=yt.title+" downloading done!"))
+        page.update()
+        
+
+    def downplaylist(e):
+        p = Playlist(str(urlbox.value))
+
+        p_len=len(p)
+        no = 1
+
+        page.add(Text(f"Total number of videos in this playlist is {p_len}"))
+        for url in p.video_urls[:p_len]:
+            link = str(url)
+            page.add(Text(f'Downloading video {no} : {link}...') )
+            no += 1             
+            yt = YouTube(link)
+            stream = yt.streams.get_highest_resolution()
+            stream.download()
+            page.add(Text(f'Downloading video {no} : {link} done!') )
+            page.update() 
+
+    def download(e):
+        try:    
+            if "playlist" in urlbox.value:
+                downplaylist(e)
+            else:
+                downvideo(e)
+        except:
+            page.add(Text(f"Sorry! I can't found this '{urlbox.value}' url or\n       You entered the wrong url!"))        
+
+    btndown= ElevatedButton(
         text="download now",
         icon=icons.DOWNLOADING_ROUNDED,
         opacity=0.8,
-        width=boxw-24,
+        width=boxw-100,
         height=boxh-40,
+        on_click=lambda e:download(e),
         )
 
 
@@ -103,4 +130,4 @@ def main(page:Page):
 
 if __name__=="__main__":
 
-    app(target=main,view=AppView.FLET_APP_WEB)
+    app(target=main)
